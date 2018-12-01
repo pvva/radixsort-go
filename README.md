@@ -7,7 +7,7 @@ Numeric sort.
 type MyType int64
 
 func (t MyType) OrderN() int64 {
-	return int64(t)
+    return int64(t)
 }
 
 ...
@@ -23,7 +23,7 @@ Lexicographical sort.
 type MyType string
 
 func (t MyType) OrderL() []byte {
-	return []byte(t)
+    return []byte(t)
 }
 
 ...

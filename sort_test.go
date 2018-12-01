@@ -25,7 +25,11 @@ func prepareListNumeric() []NumericOrder {
 	rand.Seed(time.Now().UnixNano())
 	list := make([]NumericOrder, listSize)
 	for i := 0; i < listSize; i++ {
-		list[i] = oint(rand.Int63())
+		sign := int64(1)
+		if rand.Float64() < 0.5 {
+			sign = -1
+		}
+		list[i] = oint(sign * rand.Int63())
 	}
 
 	return list

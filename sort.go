@@ -2,21 +2,14 @@ package radixsort
 
 import "math"
 
+const negShift = math.MaxInt64
+
 type NumericOrder interface {
 	OrderN() int64
 }
 
 type LexicographicalOrder interface {
 	OrderL() []byte
-}
-
-type negativeWrapper struct {
-	origin NumericOrder
-	order  int64
-}
-
-func (nw negativeWrapper) OrderN() int64 {
-	return nw.order
 }
 
 func getMaxElement(list []NumericOrder) NumericOrder {
@@ -31,30 +24,29 @@ func getMaxElement(list []NumericOrder) NumericOrder {
 	return max
 }
 
-func sortLSD(list []NumericOrder) {
+// this is LSD radix sort
+func SortNumericOrder(list []NumericOrder) {
 	if len(list) == 0 {
 		return
 	}
-	max := getMaxElement(list)
-	base := int64(256)
-	if max.OrderN() <= 65536 {
-		base = 32
-	}
-	maxOrder := int64(math.MaxInt64) / base
+	max := uint64(getMaxElement(list).OrderN()+negShift) + 1
+	base := uint64(256)
+	maxOrder := uint64(math.MaxUint64) / base
 	size := len(list)
-	order := int64(1)
+	order := uint64(1)
 	intermediate := make([]NumericOrder, size, size)
 	indices := make([]byte, size, size)
 	bucket := [256]uint64{}
 
-	for order <= max.OrderN() {
+	for order <= max {
 		for i, o := range list {
-			idx := byte((o.OrderN() / order) % base)
+			ov := uint64(o.OrderN()+negShift) + 1
+			idx := byte((ov / order) % base)
 			bucket[idx]++
 			indices[i] = idx
 		}
 
-		for i := int64(1); i < base; i++ {
+		for i := uint64(1); i < base; i++ {
 			bucket[i] += bucket[i-1]
 		}
 
@@ -72,34 +64,6 @@ func sortLSD(list []NumericOrder) {
 		order *= base
 		bucket = [256]uint64{}
 	}
-}
-
-// this is LSD radix sort
-func SortNumericOrder(list []NumericOrder) {
-	listNeg := []NumericOrder{}
-	listNNeg := []NumericOrder{}
-
-	for _, v := range list {
-		o := v.OrderN()
-		if o < 0 {
-			listNeg = append(listNeg, negativeWrapper{
-				origin: v,
-				order:  -o,
-			})
-		} else {
-			listNNeg = append(listNNeg, v)
-		}
-	}
-
-	sortLSD(listNeg)
-	sortLSD(listNNeg)
-
-	idx := 0
-	for i := len(listNeg) - 1; i >= 0; i-- {
-		list[idx] = (listNeg[i].(negativeWrapper)).origin
-		idx++
-	}
-	copy(list[idx:], listNNeg)
 }
 
 func sortMSD(list, aux []LexicographicalOrder, lo, hi, pos int) {

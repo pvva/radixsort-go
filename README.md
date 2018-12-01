@@ -4,10 +4,10 @@ LSD sort is a bit tuned in terms of performance.
 
 Numeric sort.
 ```
-type MyType uint64
+type MyType int64
 
-func (t MyType) OrderN() uint64 {
-	return uint64(t)
+func (t MyType) OrderN() int64 {
+	return int64(t)
 }
 
 ...
@@ -15,7 +15,7 @@ func (t MyType) OrderN() uint64 {
 var list []radixsort.NumericOrder
 
 radixsort.SortNumericOrder(list)
-// 12, 2, 4, 1, 5, 7 => 1, 2, 4, 5, 7, 12
+// 12, -8, 2, 4, 1, 5, -2, 7 => -8, -2, 1, 2, 4, 5, 7, 12
 ```
 
 Lexicographical sort.

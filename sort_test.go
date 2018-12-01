@@ -9,10 +9,10 @@ import (
 
 const listSize = 100000
 
-type oint uint64
+type oint int64
 
-func (i oint) OrderN() uint64 {
-	return uint64(i)
+func (i oint) OrderN() int64 {
+	return int64(i)
 }
 
 type ostring string
@@ -25,7 +25,7 @@ func prepareListNumeric() []NumericOrder {
 	rand.Seed(time.Now().UnixNano())
 	list := make([]NumericOrder, listSize)
 	for i := 0; i < listSize; i++ {
-		list[i] = oint(rand.Uint64())
+		list[i] = oint(rand.Int63())
 	}
 
 	return list

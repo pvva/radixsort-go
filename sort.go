@@ -3,11 +3,20 @@ package radixsort
 import "math"
 
 type NumericOrder interface {
-	OrderN() uint64
+	OrderN() int64
 }
 
 type LexicographicalOrder interface {
 	OrderL() []byte
+}
+
+type negativeWrapper struct {
+	origin NumericOrder
+	order  int64
+}
+
+func (nw negativeWrapper) OrderN() int64 {
+	return nw.order
 }
 
 func getMaxElement(list []NumericOrder) NumericOrder {
@@ -22,19 +31,18 @@ func getMaxElement(list []NumericOrder) NumericOrder {
 	return max
 }
 
-// this is LSD radix sort
-func SortNumericOrder(list []NumericOrder) {
+func sortLSD(list []NumericOrder) {
 	if len(list) == 0 {
 		return
 	}
 	max := getMaxElement(list)
-	base := uint64(256)
+	base := int64(256)
 	if max.OrderN() <= 65536 {
 		base = 32
 	}
-	maxOrder := uint64(math.MaxUint64) / base
+	maxOrder := int64(math.MaxInt64) / base
 	size := len(list)
-	order := uint64(1)
+	order := int64(1)
 	intermediate := make([]NumericOrder, size, size)
 	indices := make([]byte, size, size)
 	bucket := [256]uint64{}
@@ -46,7 +54,7 @@ func SortNumericOrder(list []NumericOrder) {
 			indices[i] = idx
 		}
 
-		for i := uint64(1); i < base; i++ {
+		for i := int64(1); i < base; i++ {
 			bucket[i] += bucket[i-1]
 		}
 
@@ -64,6 +72,34 @@ func SortNumericOrder(list []NumericOrder) {
 		order *= base
 		bucket = [256]uint64{}
 	}
+}
+
+// this is LSD radix sort
+func SortNumericOrder(list []NumericOrder) {
+	listNeg := []NumericOrder{}
+	listNNeg := []NumericOrder{}
+
+	for _, v := range list {
+		o := v.OrderN()
+		if o < 0 {
+			listNeg = append(listNeg, negativeWrapper{
+				origin: v,
+				order:  -o,
+			})
+		} else {
+			listNNeg = append(listNNeg, v)
+		}
+	}
+
+	sortLSD(listNeg)
+	sortLSD(listNNeg)
+
+	idx := 0
+	for i := len(listNeg) - 1; i >= 0; i-- {
+		list[idx] = (listNeg[i].(negativeWrapper)).origin
+		idx++
+	}
+	copy(list[idx:], listNNeg)
 }
 
 func sortMSD(list, aux []LexicographicalOrder, lo, hi, pos int) {
